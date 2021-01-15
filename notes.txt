@@ -1,0 +1,14 @@
+1. NettyServer的option和childOption区别
+handler()和childHandler()的主要区别是，handler()是发生在初始化的时候，childHandler()是发生在客户端连接之后。
+
+也就是说，如果需要在客户端连接前的请求进行handler处理，则需要配置handler(),如果是处理客户端连接之后的handler,则需要配置在childHandler()。
+
+childHandler()配置的handler是客户端连接之后才会处理的。其实，option和childOption也是一样的道理。
+
+childHandler()和childOption()都是给workerGroup （也就是group方法中的childGroup参数）进行设置的，option()和handler()都是给bossGroup（也就是group方法中的parentGroup参数）设置的。
+
+还有一种方法说option()和handler()是在server启动时进行设置和调用，childHandler()和childOption()是在连接建立是设置和调用的。
+
+bossGroup是在服务器一启动就开始工作，负责监听客户端的连接请求。当建立连接后就交给了workGroup进行事务处理，两种是从不同的角度解释的。
+
+对于netty客户端来说，只有option。
