@@ -16,6 +16,7 @@ import io.netty.example.study.server.handler.OrderServerProcessHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
 
 import java.util.concurrent.ExecutionException;
 
@@ -32,6 +33,9 @@ public class Server {
         serverBootstrap.childOption(NioChannelOption.TCP_NODELAY, true);
         // 设置等待队列中的连接数（当连接不够用时，后来的链接会放到队列中等待）
         serverBootstrap.option(NioChannelOption.SO_BACKLOG, 1024);
+
+        // 创建一个独立的线程池专门给orderHandler业务使用
+        UnorderedThreadPoolEventExecutor executor = new UnorderedThreadPoolEventExecutor(3,  new DefaultThreadFactory("orderHandleThreadPoll"));
 
         NioEventLoopGroup bossGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("boss"));
         NioEventLoopGroup group = new NioEventLoopGroup(2, new DefaultThreadFactory("worker"));
@@ -52,7 +56,7 @@ public class Server {
 
                     pipeline.addLast("logger", new LoggingHandler(LogLevel.INFO));
 
-                    pipeline.addLast("orderHandler", new OrderServerProcessHandler());
+                    pipeline.addLast(executor, new OrderServerProcessHandler());
                 }
             });
 
