@@ -8,9 +8,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.example.study.client.codec.*;
-import io.netty.example.study.client.handler.dispatcher.OperationResultFuture;
-import io.netty.example.study.client.handler.dispatcher.RequestPendingCenter;
-import io.netty.example.study.client.handler.dispatcher.ResponseDispatcherHandler;
+import io.netty.example.study.client.handler.dispatcher.*;
 import io.netty.example.study.common.OperationResult;
 import io.netty.example.study.common.RequestMessage;
 import io.netty.example.study.common.order.OrderOperation;
@@ -32,6 +30,9 @@ public class ClientV2 {
         bootstrap.option(NioChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
 
         NioEventLoopGroup group = new NioEventLoopGroup();
+
+        KeepaliveHandler keepaliveHandler = new KeepaliveHandler();
+
         try{
             bootstrap.group(group);
             RequestPendingCenter requestPendingCenter = new RequestPendingCenter();
@@ -40,6 +41,8 @@ public class ClientV2 {
                 @Override
                 protected void initChannel(NioSocketChannel ch) throws Exception {
                     ChannelPipeline pipeline = ch.pipeline();
+                    pipeline.addLast("clientIdleChecker", new ClientIdleHandler());
+
                     pipeline.addLast(new OrderFrameDecoder());
                     pipeline.addLast(new OrderFrameEncoder());
 
@@ -49,6 +52,10 @@ public class ClientV2 {
                     pipeline.addLast(new ResponseDispatcherHandler(requestPendingCenter));
 
                     pipeline.addLast(new OperationToRequestMessageEncoder());
+
+                    // 因为keepalive的发生是在编码之后的，所以要放到后面一点。
+                    // 有了keepalive后，idle检测不会直接断开连接，因为服务器设置了10秒的读idle检测，而这里5秒发送一个keepalive
+                    pipeline.addLast("keepaliveHandler", keepaliveHandler);
 
                     pipeline.addLast(new LoggingHandler(LogLevel.INFO));
                 }
