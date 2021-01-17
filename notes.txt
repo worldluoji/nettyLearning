@@ -1,4 +1,4 @@
-1. NettyServer的option和childOption区别
+﻿1. NettyServer的option和childOption区别
 handler()和childHandler()的主要区别是，handler()是发生在初始化的时候，childHandler()是发生在客户端连接之后。
 
 也就是说，如果需要在客户端连接前的请求进行handler处理，则需要配置handler(),如果是处理客户端连接之后的handler,则需要配置在childHandler()。
@@ -12,3 +12,9 @@ childHandler()和childOption()都是给workerGroup （也就是group方法中的
 bossGroup是在服务器一启动就开始工作，负责监听客户端的连接请求。当建立连接后就交给了workGroup进行事务处理，两种是从不同的角度解释的。
 
 对于netty客户端来说，只有option。
+
+
+2. channel: 也就是连接；
+eventloop：为连接服务的执行器，说白了，就是一个死循环（loop）轮询、处理channel上发生的事件（event）。
+一个channel只会绑定到一个eventloop,但是一个eventloop一般服务于多个channel.
+eventloopgroup: 假设就一个eventloop服务于所有channel，肯定会有瓶颈，所以搞一个组，相当于多线程了。
