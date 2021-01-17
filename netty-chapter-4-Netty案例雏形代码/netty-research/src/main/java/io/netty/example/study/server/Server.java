@@ -13,6 +13,7 @@ import io.netty.example.study.server.codec.OrderFrameDecoder;
 import io.netty.example.study.server.codec.OrderFrameEncoder;
 import io.netty.example.study.server.codec.OrderProtocolDecoder;
 import io.netty.example.study.server.codec.OrderProtocolEncoder;
+import io.netty.example.study.server.handler.AuthHandler;
 import io.netty.example.study.server.handler.OrderServerProcessHandler;
 import io.netty.example.study.server.handler.ServerIdleStateHandler;
 import io.netty.handler.flush.FlushConsolidationHandler;
@@ -53,6 +54,7 @@ public class Server {
         NioEventLoopGroup group = new NioEventLoopGroup(2, new DefaultThreadFactory("worker"));
 
         // 全局读写限流控制都设置为100MB, 当实际业务机器、资源已经足够，就没有必要设置它了. 如果只对channel限流就用ChannelTrafficShapingHandler
+        // 因为是shareable的，所以可以写在外面
         GlobalTrafficShapingHandler tsHandler = new GlobalTrafficShapingHandler(new NioEventLoopGroup(), 100 * 1024 * 1024, 100 * 1024 * 1024);
 
         // 黑白名单控制
@@ -60,6 +62,9 @@ public class Server {
                 // 表示拒绝与28.4.39.42前16位相同IP的客户端的建立连接
                 new IpSubnetFilterRule("28.4.39.42", 16, IpFilterRuleType.REJECT)
         );
+
+        // 授权
+        AuthHandler authHandler = new AuthHandler();
 
         try{
             serverBootstrap.group(bossGroup, group);
@@ -78,6 +83,8 @@ public class Server {
                     pipeline.addLast("protocolEncoder", new OrderProtocolEncoder());
                     pipeline.addLast("protocolDecoder", new OrderProtocolDecoder());
 
+                    // 有了它之后，必须经过授权，才能进行后续的操作
+                    pipeline.addLast("authHandler", authHandler);
                     pipeline.addLast("logger", new LoggingHandler(LogLevel.INFO));
 
                     // flush增强，flush 3次才真正进行flush操作，减少写的次数，增大吞吐量，但同样带来了延迟，实时性很高的不建议打开

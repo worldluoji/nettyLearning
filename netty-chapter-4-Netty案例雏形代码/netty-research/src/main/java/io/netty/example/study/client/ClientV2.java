@@ -11,6 +11,7 @@ import io.netty.example.study.client.codec.*;
 import io.netty.example.study.client.handler.dispatcher.*;
 import io.netty.example.study.common.OperationResult;
 import io.netty.example.study.common.RequestMessage;
+import io.netty.example.study.common.auth.AuthOperation;
 import io.netty.example.study.common.order.OrderOperation;
 import io.netty.example.study.util.IdUtil;
 import io.netty.handler.logging.LogLevel;
@@ -66,6 +67,9 @@ public class ClientV2 {
 
             channelFuture.sync();
 
+            // 进行认证授权
+            sendAuthMsg(channelFuture);
+
             long streamId = IdUtil.nextId();
 
             RequestMessage requestMessage = new RequestMessage(
@@ -92,6 +96,12 @@ public class ClientV2 {
             log.info("client v2 down...");
             group.shutdownGracefully();
         }
+    }
+
+    private static void sendAuthMsg(ChannelFuture channelFuture) {
+        RequestMessage requestMessage = new RequestMessage(
+                IdUtil.nextId(), new AuthOperation("admin", "tudou"));
+        channelFuture.channel().writeAndFlush(requestMessage);
     }
 
 }
