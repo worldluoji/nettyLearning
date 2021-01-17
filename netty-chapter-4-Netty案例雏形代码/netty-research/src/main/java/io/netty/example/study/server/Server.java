@@ -4,6 +4,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -43,6 +44,7 @@ public class Server {
         // 创建一个独立的线程池专门给orderHandler业务使用
         UnorderedThreadPoolEventExecutor executor = new UnorderedThreadPoolEventExecutor(3,  new DefaultThreadFactory("orderHandleThreadPoll"));
 
+        //Linux下，可以使用EpollEventLoopGroup()来代替NioEventLoopGroup，这样就会使用native epoll
         NioEventLoopGroup bossGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("boss"));
         NioEventLoopGroup group = new NioEventLoopGroup(2, new DefaultThreadFactory("worker"));
 
