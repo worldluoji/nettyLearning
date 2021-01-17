@@ -16,6 +16,9 @@ import io.netty.example.study.server.handler.OrderServerProcessHandler;
 import io.netty.handler.flush.FlushConsolidationHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.traffic.ChannelTrafficShapingHandler;
+import io.netty.handler.traffic.GlobalChannelTrafficShapingHandler;
+import io.netty.handler.traffic.GlobalTrafficShapingHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +46,9 @@ public class Server {
         NioEventLoopGroup bossGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("boss"));
         NioEventLoopGroup group = new NioEventLoopGroup(2, new DefaultThreadFactory("worker"));
 
+        // 全局读写限流控制都设置为100MB, 当实际业务机器、资源已经足够，就没有必要设置它了. 如果只对channel限流就用ChannelTrafficShapingHandler
+        GlobalTrafficShapingHandler tsHandler = new GlobalTrafficShapingHandler(new NioEventLoopGroup(), 100 * 1024 * 1024, 100 * 1024 * 1024);
+
         try{
             serverBootstrap.group(bossGroup, group);
 
@@ -50,6 +56,7 @@ public class Server {
                 @Override
                 protected void initChannel(NioSocketChannel ch) throws Exception {
                     ChannelPipeline pipeline = ch.pipeline();
+                    pipeline.addLast("tsHandler", tsHandler);
 
                     pipeline.addLast("frameDecoder", new OrderFrameDecoder());
                     pipeline.addLast("frameEncoder", new OrderFrameEncoder());
