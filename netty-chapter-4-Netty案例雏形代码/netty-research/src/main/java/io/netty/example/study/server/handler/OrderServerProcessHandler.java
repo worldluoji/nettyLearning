@@ -6,8 +6,9 @@ import io.netty.example.study.common.Operation;
 import io.netty.example.study.common.OperationResult;
 import io.netty.example.study.common.RequestMessage;
 import io.netty.example.study.common.ResponseMessage;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 public class OrderServerProcessHandler extends SimpleChannelInboundHandler<RequestMessage> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RequestMessage requestMessage) throws Exception {
@@ -17,8 +18,13 @@ public class OrderServerProcessHandler extends SimpleChannelInboundHandler<Reque
         ResponseMessage responseMessage = new ResponseMessage();
         responseMessage.setMessageHeader(requestMessage.getMessageHeader());
         responseMessage.setMessageBody(operationResult);
-
-        ctx.writeAndFlush(responseMessage);
+        // 进行保护，防止OOM
+        if (ctx.channel().isActive() && ctx.channel().isWritable()) {
+            ctx.writeAndFlush(responseMessage);
+        } else {
+            // 不可写的时候就丢掉包，总比OOM好
+            log.error("fail to write msg because of unWritable");
+        }
     }
 
 
