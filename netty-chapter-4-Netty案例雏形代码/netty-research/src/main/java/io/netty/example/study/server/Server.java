@@ -16,6 +16,9 @@ import io.netty.example.study.server.codec.OrderProtocolEncoder;
 import io.netty.example.study.server.handler.OrderServerProcessHandler;
 import io.netty.example.study.server.handler.ServerIdleStateHandler;
 import io.netty.handler.flush.FlushConsolidationHandler;
+import io.netty.handler.ipfilter.IpFilterRuleType;
+import io.netty.handler.ipfilter.IpSubnetFilterRule;
+import io.netty.handler.ipfilter.RuleBasedIpFilter;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
@@ -52,6 +55,12 @@ public class Server {
         // 全局读写限流控制都设置为100MB, 当实际业务机器、资源已经足够，就没有必要设置它了. 如果只对channel限流就用ChannelTrafficShapingHandler
         GlobalTrafficShapingHandler tsHandler = new GlobalTrafficShapingHandler(new NioEventLoopGroup(), 100 * 1024 * 1024, 100 * 1024 * 1024);
 
+        // 黑白名单控制
+        RuleBasedIpFilter ruleBasedIpFilter = new RuleBasedIpFilter(
+                // 表示拒绝与28.4.39.42前16位相同IP的客户端的建立连接
+                new IpSubnetFilterRule("28.4.39.42", 16, IpFilterRuleType.REJECT)
+        );
+
         try{
             serverBootstrap.group(bossGroup, group);
 
@@ -59,6 +68,7 @@ public class Server {
                 @Override
                 protected void initChannel(NioSocketChannel ch) throws Exception {
                     ChannelPipeline pipeline = ch.pipeline();
+                    pipeline.addLast("ipFilter", ruleBasedIpFilter);
                     pipeline.addLast("tsHandler", tsHandler);
                     pipeline.addLast("idleChecker", new ServerIdleStateHandler());
 
