@@ -13,13 +13,16 @@ import io.netty.example.study.server.codec.OrderFrameEncoder;
 import io.netty.example.study.server.codec.OrderProtocolDecoder;
 import io.netty.example.study.server.codec.OrderProtocolEncoder;
 import io.netty.example.study.server.handler.OrderServerProcessHandler;
+import io.netty.handler.flush.FlushConsolidationHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutionException;
 
+@Slf4j
 public class Server {
 
     public static void main(String[] args) throws InterruptedException, ExecutionException {
@@ -56,6 +59,8 @@ public class Server {
 
                     pipeline.addLast("logger", new LoggingHandler(LogLevel.INFO));
 
+                    // flush增强，flush 3次才真正进行flush操作，减少写的次数，增大吞吐量，但同样带来了延迟，实时性很高的不建议打开
+                    pipeline.addLast("flushSolid", new FlushConsolidationHandler(3, true));
                     pipeline.addLast(executor, new OrderServerProcessHandler());
                 }
             });
@@ -64,7 +69,7 @@ public class Server {
             // 阻塞，直到监听到关闭事件
             channelFuture.channel().closeFuture().sync();
         } finally {
-            System.out.println("Server down...");
+            log.info("Server down...");
             group.shutdownGracefully();
         }
 

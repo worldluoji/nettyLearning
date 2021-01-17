@@ -17,9 +17,11 @@ import io.netty.example.study.common.order.OrderOperation;
 import io.netty.example.study.util.IdUtil;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutionException;
 
+@Slf4j
 public class ClientV2 {
 
     public static void main(String[] args) throws InterruptedException, ExecutionException {
@@ -66,18 +68,21 @@ public class ClientV2 {
 
             requestPendingCenter.add(streamId, operationResultFuture);
 
+            log.info("[ClientV2]send msg to server");
             channelFuture.channel().writeAndFlush(requestMessage);
 
             // 阻塞，直到上面ResponseDispatcherHandler返回结果，设置返回的东东
             OperationResult operationResult = operationResultFuture.get();
 
-            System.out.println(operationResult);
+            log.info("[ClientV2]receive msg from server");
+
+            log.info(operationResult.toString());
 
             // 客户端同步断开链接时，这句才会往下执行。让线程进入wait状态，也就是main线程不会执行到finally里面，
             // client持续运行, 直到监听到关闭事件
             channelFuture.channel().closeFuture().sync();
         } finally {
-            System.out.println("client v2 down...");
+            log.info("client v2 down...");
             group.shutdownGracefully();
         }
     }
