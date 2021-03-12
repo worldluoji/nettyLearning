@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>netty-research</name>
+	<name>simple-netty-demo</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -22,7 +22,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1615513101322</id>
+			<id>1615513101360</id>
 			<name></name>
 			<type>30</type>
 			<matcher>

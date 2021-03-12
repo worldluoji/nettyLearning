@@ -1,7 +1,6 @@
 package io.netty.example.study.server.handler;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 

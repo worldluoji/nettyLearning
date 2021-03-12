@@ -4,7 +4,6 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -22,8 +21,6 @@ import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import io.netty.handler.ipfilter.RuleBasedIpFilter;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.traffic.ChannelTrafficShapingHandler;
-import io.netty.handler.traffic.GlobalChannelTrafficShapingHandler;
 import io.netty.handler.traffic.GlobalTrafficShapingHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
@@ -77,7 +74,9 @@ public class Server {
                     pipeline.addLast("tsHandler", tsHandler);
                     pipeline.addLast("idleChecker", new ServerIdleStateHandler());
 
+                    // decoder 实际上是继承了 ChannelInboundHandlerAdapter，只有接收消息时才会调用
                     pipeline.addLast("frameDecoder", new OrderFrameDecoder());
+                    // encoder 实际上是继承了 ChannelOutboundHandlerAdapter，只有发送消息时才会调用
                     pipeline.addLast("frameEncoder", new OrderFrameEncoder());
 
                     pipeline.addLast("protocolEncoder", new OrderProtocolEncoder());
@@ -85,6 +84,7 @@ public class Server {
 
                     // 有了它之后，必须经过授权，才能进行后续的操作
                     pipeline.addLast("authHandler", authHandler);
+                    // LoggingHandler 使用的是ChannelDuplexHandler， 所以输入输出时都会调用
                     pipeline.addLast("logger", new LoggingHandler(LogLevel.INFO));
 
                     // flush增强，flush 3次才真正进行flush操作，减少写的次数，增大吞吐量，但同样带来了延迟，实时性很高的不建议打开
