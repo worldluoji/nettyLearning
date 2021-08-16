@@ -3,8 +3,10 @@ package io.netty.example.study.common.auth;
 
 import io.netty.example.study.common.Operation;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 public class AuthOperation extends Operation {
 
     private final String userName;
