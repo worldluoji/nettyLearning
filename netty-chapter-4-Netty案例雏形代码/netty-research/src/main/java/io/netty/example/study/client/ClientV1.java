@@ -28,6 +28,7 @@ public class ClientV1 {
                 @Override
                 protected void initChannel(NioSocketChannel ch) throws Exception {
                     ChannelPipeline pipeline = ch.pipeline();
+                    // OrderFrameDecoder解码出来就是一个ByteBuf，然后会给OrderProtocolDecoder使用
                     pipeline.addLast(new OrderFrameDecoder());
                     pipeline.addLast(new OrderFrameEncoder());
 
