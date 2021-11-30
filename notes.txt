@@ -13,3 +13,11 @@ bossGroup是在服务器一启动就开始工作，负责监听客户端的连�
 eventloop：为连接服务的执行器，说白了，就是一个死循环（loop）轮询、处理channel上发生的事件（event）。
 一个channel只会绑定到一个eventloop,但是一个eventloop一般服务于多个channel.
 eventloopgroup: 假设就一个eventloop服务于所有channel，肯定会有瓶颈，所以搞一个组，相当于多线程了。
+
+3. idle检测理解：
+客户端IDLE检测：如果一段时间内，客户端发现IDLE了，就给服务器发一个keepalive报文，看服务器是否有回应；如果没有，说明心跳断了，可以断开了
+服务器IDLE检测：如果一段时间内，服务器端发现IDLE了，就可以直接断开和客户端的连接，防止资源浪费。
+idle类型：
+ALL_IDLE : 一段时间内没有数据接收或者发送
+READER_IDLE ： 一段时间内没有数据接收
+WRITER_IDLE ： 一段时间内没有数据发送
